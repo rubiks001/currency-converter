@@ -371,8 +371,8 @@ export default function CurrencyConverter() {
   }
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 bg-gray-100 dark:bg-gray-950">
-      <div className="rounded-2xl shadow-lg p-8 w-full max-w-md bg-white dark:bg-gray-900">
+    <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-10 bg-gray-100 dark:bg-gray-950">
+      <div className="rounded-2xl shadow-lg p-6 sm:p-8 w-full max-w-md sm:max-w-lg bg-white dark:bg-gray-900">
         <h1 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">
           Currency Converter
         </h1>
@@ -395,8 +395,8 @@ export default function CurrencyConverter() {
           />
         </div>
 
-        <div className="flex gap-3 items-end mb-6">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-end mb-6">
+          <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-400">From</label>
             <CurrencySelect
               value={fromCurrency}
@@ -408,12 +408,12 @@ export default function CurrencyConverter() {
           </div>
           <button
             onClick={handleSwap}
-            className="mb-0.5 p-2.5 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-violet-50 dark:hover:bg-violet-900/30 hover:border-violet-400 text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+            className="self-center p-2.5 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-violet-50 dark:hover:bg-violet-900/30 hover:border-violet-400 text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors rotate-90 sm:rotate-0"
             title="Swap currencies"
           >
             ⇄
           </button>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-400">To</label>
             <CurrencySelect
               value={toCurrency}
@@ -470,7 +470,7 @@ export default function CurrencyConverter() {
       </div>
 
       {history.length > 0 && (
-        <div className="mt-4 w-full max-w-md rounded-2xl border border-gray-100 dark:border-gray-800 p-5 bg-white dark:bg-gray-900">
+        <div className="mt-4 w-full max-w-md sm:max-w-lg rounded-2xl border border-gray-100 dark:border-gray-800 p-5 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold tracking-widest uppercase text-gray-400">
               Past Searches

@@ -19,7 +19,7 @@ export default function Header() {
   }
 
   return (
-    <header className="w-full px-8 py-4 flex items-center justify-between bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shadow-sm">
+    <header className="w-full px-4 sm:px-8 py-4 flex items-center justify-between bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shadow-sm">
       <div className="flex items-center gap-2.5">
         <span className="text-2xl">💱</span>
         <span className="text-xl font-black tracking-tight bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
