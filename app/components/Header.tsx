@@ -15,7 +15,9 @@ export default function Header() {
     const next = !dark
     setDark(next)
     localStorage.setItem("fx-dark", String(next))
+    document.documentElement.classList.add("theme-transitioning")
     document.documentElement.classList.toggle("dark", next)
+    setTimeout(() => document.documentElement.classList.remove("theme-transitioning"), 450)
   }
 
   return (
@@ -37,9 +39,9 @@ export default function Header() {
         <button
           onClick={toggle}
           className="text-xl leading-none"
-          title="Toggle dark mode"
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
         >
-          {dark ? "☀️" : "🌙"}
+          <span aria-hidden="true">{dark ? "☀️" : "🌙"}</span>
         </button>
       </div>
     </header>

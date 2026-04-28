@@ -168,18 +168,37 @@ const CURRENCIES: Currency[] = [
   { code: "ZWL", name: "Zimbabwean Dollar" },
 ]
 
+const CURRENCY_COUNTRY_OVERRIDE: Record<string, string> = {
+  EUR: "EU",
+  XPF: "PF",
+}
+
+function getCurrencyFlag(code: string): string {
+  if (["XAF", "XOF", "XCD"].includes(code)) return ""
+  const country = CURRENCY_COUNTRY_OVERRIDE[code] ?? code.slice(0, 2)
+  return Array.from(country.toUpperCase())
+    .map((c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
+    .join("")
+}
+
+function fmt(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 function CurrencySelect({
   value,
   onChange,
   favourites,
   onToggleFavourite,
   exclude,
+  id,
 }: {
   value: string
   onChange: (code: string) => void
   favourites: string[]
   onToggleFavourite: (code: string) => void
   exclude: string
+  id: string
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
@@ -214,10 +233,15 @@ function CurrencySelect({
     <div ref={ref} className="relative">
       <button
         type="button"
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls={`${id}-listbox`}
+        aria-label={`${selected?.code} — ${selected?.name}`}
         onClick={() => setIsOpen(!isOpen)}
         className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-violet-500"
       >
-        <span className="truncate">{selected?.code} — {selected?.name}</span>
+        <span className="truncate">{selected && getCurrencyFlag(selected.code)} {selected?.code} — {selected?.name}</span>
         <span className="text-gray-400 ml-2 shrink-0">▾</span>
       </button>
 
@@ -233,10 +257,12 @@ function CurrencySelect({
               className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
-          <ul className="max-h-52 overflow-y-auto">
+          <ul role="listbox" id={`${id}-listbox`} className="max-h-52 overflow-y-auto">
             {sorted.map((c) => (
               <li
                 key={c.code}
+                role="option"
+                aria-selected={c.code === value}
                 className={`flex justify-between items-center px-4 py-2 text-sm cursor-pointer ${
                   c.code === value
                     ? "bg-violet-50 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 font-medium"
@@ -250,7 +276,7 @@ function CurrencySelect({
                   {favourites.includes(c.code) && (
                     <span className="mr-1.5 text-yellow-400">★</span>
                   )}
-                  {c.code} — {c.name}
+                  {getCurrencyFlag(c.code)} {c.code} — {c.name}
                 </span>
                 <button
                   onClick={(e) => { e.stopPropagation(); onToggleFavourite(c.code) }}
@@ -286,6 +312,7 @@ export default function CurrencyConverter() {
   const [copied, setCopied] = useState(false)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [favourites, setFavourites] = useState<string[]>([])
+  const [swapKey, setSwapKey] = useState(0)
 
   // Load persisted data after hydration — setState inside .then() satisfies the
   // react-hooks/set-state-in-effect rule (callback, not synchronous in effect body)
@@ -347,6 +374,7 @@ export default function CurrencyConverter() {
   }
 
   function handleSwap() {
+    setSwapKey(k => k + 1)
     setFromCurrency(toCurrency)
     setToCurrency(fromCurrency)
     setResult(null)
@@ -399,6 +427,7 @@ export default function CurrencyConverter() {
           <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-400">From</label>
             <CurrencySelect
+              id="from-currency"
               value={fromCurrency}
               onChange={(code) => { setFromCurrency(code); loadRate(code, toCurrency) }}
               favourites={favourites}
@@ -409,13 +438,14 @@ export default function CurrencyConverter() {
           <button
             onClick={handleSwap}
             className="self-center p-2.5 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-violet-50 dark:hover:bg-violet-900/30 hover:border-violet-400 text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors rotate-90 sm:rotate-0"
-            title="Swap currencies"
+            aria-label="Swap currencies"
           >
-            ⇄
-          </button>
+            <span key={swapKey} aria-hidden="true" className="inline-block animate-spin-once">⇄</span>
+</button>
           <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-400">To</label>
             <CurrencySelect
+              id="to-currency"
               value={toCurrency}
               onChange={(code) => { setToCurrency(code); loadRate(fromCurrency, code) }}
               favourites={favourites}
@@ -425,12 +455,26 @@ export default function CurrencyConverter() {
           </div>
         </div>
 
+        <div className="flex items-center justify-center gap-2 text-sm mb-4 h-5">
+          {loading && (
+            <span className="text-gray-400 text-xs animate-pulse">Fetching rate…</span>
+          )}
+          {!loading && rate !== null && (
+            <span key={`${fromCurrency}-${toCurrency}-${rate}`} className="flex items-center gap-2 animate-fade-slide-in">
+              <span className="text-gray-400 dark:text-gray-500 text-xs">1 {fromCurrency} =</span>
+              <span className="inline-block font-semibold text-violet-600 dark:text-violet-400 text-sm animate-rate-pop">
+                {rate.toFixed(4)} {toCurrency}
+              </span>
+            </span>
+          )}
+        </div>
+
         <button
           onClick={handleConvert}
           disabled={!amount || parseFloat(amount) <= 0 || loading}
           className="w-full bg-gradient-to-r from-violet-600 to-pink-500 text-white py-2.5 rounded-lg font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity mb-4"
         >
-          {loading ? "Fetching rate..." : "Convert"}
+          Convert
         </button>
 
         {error && (
@@ -445,6 +489,7 @@ export default function CurrencyConverter() {
           </div>
         )}
 
+        <div aria-live="polite" aria-atomic="true">
         {result !== null && !loading && (
           <div className="text-center rounded-xl p-5 bg-violet-50 dark:bg-violet-900/20">
             {rate !== null && (
@@ -453,7 +498,7 @@ export default function CurrencyConverter() {
               </p>
             )}
             <p className="text-3xl font-bold bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
-              {result.toFixed(2)} {toCurrency}
+              {fmt(result)} {toCurrency}
             </p>
             <button
               onClick={handleCopy}
@@ -467,6 +512,7 @@ export default function CurrencyConverter() {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {history.length > 0 && (
@@ -493,7 +539,7 @@ export default function CurrencyConverter() {
                 </span>
                 <span className="text-gray-400 dark:text-gray-600 mx-2">→</span>
                 <span className="font-semibold bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">
-                  {item.result.toFixed(2)} {item.to}
+                  {fmt(item.result)} {item.to}
                 </span>
               </li>
             ))}
